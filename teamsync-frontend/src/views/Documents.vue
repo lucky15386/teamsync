@@ -4,14 +4,19 @@
       <template #header>
         <div class="card-header">
           <span class="title-text">项目文档管理</span>
-          <el-upload
-            class="upload-btn"
-            :show-file-list="false"
-            :http-request="handleCustomUpload"
-            :before-upload="beforeUpload"
-          >
-            <el-button type="primary">上传新文档</el-button>
-          </el-upload>
+          <div style="display:flex;gap:12px;align-items:center">
+            <el-select v-model="selectedProject" placeholder="选择项目" style="width:200px" clearable>
+              <el-option v-for="p in projects" :key="p.id" :label="p.name" :value="p.id" />
+            </el-select>
+            <el-upload
+              class="upload-btn"
+              :show-file-list="false"
+              :http-request="handleCustomUpload"
+              :before-upload="beforeUpload"
+            >
+              <el-button type="primary" :disabled="!selectedProject">上传新文档</el-button>
+            </el-upload>
+          </div>
         </div>
       </template>
       
@@ -48,10 +53,13 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Document } from '@element-plus/icons-vue'
-import request from '../utils/request'
+import { getDocuments, uploadDocument, deleteDocument, downloadDocument } from '../api/document'
+import { getMyProjects } from '../api/project'
 
 const loading = ref(false)
 const documentList = ref([])
+const projects = ref([])
+const selectedProject = ref(null)
 
 const formatFileSize = (size) => {
   if (!size) return '0 B'
@@ -65,7 +73,7 @@ const formatFileSize = (size) => {
 const fetchDocuments = async () => {
   loading.value = true
   try {
-    const res = await request.get('/documents')
+    const res = await getDocuments()
     if (res.code === 200) {
       documentList.value = res.data || []
     }
@@ -73,6 +81,17 @@ const fetchDocuments = async () => {
     console.error('获取文档列表失败:', error)
   } finally {
     loading.value = false
+  }
+}
+
+const fetchProjects = async () => {
+  try {
+    const res = await getMyProjects()
+    if (res.code === 200) {
+      projects.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取项目列表失败:', error)
   }
 }
 
@@ -85,14 +104,13 @@ const beforeUpload = (file) => {
 }
 
 const handleCustomUpload = async (options) => {
-  const formData = new FormData()
-  formData.append('file', options.file)
+  if (!selectedProject.value) {
+    ElMessage.warning('请先选择项目')
+    return
+  }
   
   try {
-    const res = await request.post('/documents/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-    
+    const res = await uploadDocument(selectedProject.value, options.file)
     if (res.code === 200) {
       ElMessage.success('上传成功')
       fetchDocuments()
@@ -113,11 +131,7 @@ const previewDoc = (row) => {
 }
 
 const downloadDoc = (row) => {
-  if(row.fileUrl) {
-    window.open(row.fileUrl, '_blank')
-  } else {
-    ElMessage.warning('下载链接不可用')
-  }
+  downloadDocument(row.id)
 }
 
 const deleteDoc = (row) => {
@@ -127,7 +141,7 @@ const deleteDoc = (row) => {
     type: 'warning'
   }).then(async () => {
     try {
-      const res = await request.delete(`/documents/${row.id}`)
+      const res = await deleteDocument(row.id)
       if (res.code === 200) {
         ElMessage.success('文档已删除')
         fetchDocuments()
@@ -140,6 +154,7 @@ const deleteDoc = (row) => {
 
 onMounted(() => {
   fetchDocuments()
+  fetchProjects()
 })
 </script>
 

@@ -2,6 +2,7 @@ import request from '../utils/request'
 
 export const createProject = (data) => request.post('/projects', data)
 export const getMyProjects = () => request.get('/projects')
+export const getProjects = () => request.get('/projects')
 export const getAllProjects = () => request.get('/projects/all')
 export const getProjectById = (id) => request.get(`/projects/${id}`)
 export const updateProject = (id, data) => request.put(`/projects/${id}`, data)
