@@ -68,14 +68,13 @@
             />
           </div>
           <div class="input-actions">
-            <el-button type="primary" :disabled="!inputMessage.trim()" @click="sendMessage">
+            <el-button type="primary" :disabled="!inputMessage.trim() || loading" @click="sendMessage">
               <el-icon><Promotion /></el-icon> 发送
             </el-button>
           </div>
         </div>
       </div>
     </div>
-    <!-- 新建聊天对话框 -->
     <el-dialog v-model="newChatDialogVisible" title="开始新聊天" width="500px">
       <el-tabs v-model="newChatTab">
         <el-tab-pane label="用户" name="user">
@@ -119,7 +118,7 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { useUserStore } from '../stores/user'
 import { ElMessage } from 'element-plus'
-import { ChatDotRound, Promotion, Plus, User, Folder } from '@element-plus/icons-vue'
+import { ChatDotRound, Promotion, Plus, Folder } from '@element-plus/icons-vue'
 import { getUserSessions, getSessionMessages, sendMessage as sendApiMessage, markAsRead, getOrCreatePrivateSession, getOrCreateProjectSession } from '../api/chat'
 import { getUserOptions } from '../api/user'
 import { getProjects } from '../api/project'
@@ -184,7 +183,7 @@ const loadMessages = async (sessionId) => {
     const res = await getSessionMessages(sessionId)
     messagesMap.value[sessionId] = (res.data || []).map(msg => ({
       id: msg.id,
-      isSelf: msg.senderId === userStore.user?.id,
+      isSelf: msg.senderId === (userStore.user?.id || -1),
       content: msg.content,
       time: formatDateTime(msg.createTime, 'HH:mm'),
       fullTime: formatDateTime(msg.createTime),
@@ -200,7 +199,6 @@ const startPrivateChat = async (targetUser) => {
   try {
     const res = await getOrCreatePrivateSession(targetUser.id)
     const session = res.data
-    // 检查是否已存在
     if (!chatList.value.find(c => c.id === session.id)) {
       chatList.value.unshift(session)
     }
@@ -422,15 +420,15 @@ onMounted(() => {
   flex-shrink: 0;
 }
 .message-wrapper {
-  max-width: 60%;
+  max-width: 65%;
   margin: 0 12px;
 }
 .message-self .message-wrapper {
   text-align: right;
 }
 .message-bubble {
-  padding: 10px 14px;
-  border-radius: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
   word-wrap: break-word;
   display: inline-block;
 }
@@ -455,12 +453,12 @@ onMounted(() => {
 .message-sender {
   font-size: 12px;
   color: #6b7280;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 .message-time {
   font-size: 12px;
   color: #9ca3af;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 .chat-input-area {
   padding: 16px 20px;
@@ -486,7 +484,6 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
 }
-/* 新建聊天对话框样式 */
 .user-list,
 .project-list {
   max-height: 400px;
