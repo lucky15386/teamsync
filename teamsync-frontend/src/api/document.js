@@ -13,4 +13,17 @@ export const getDocuments = () => request.get('/documents')
 export const getDocumentsByProject = (projectId) => request.get(`/documents/project/${projectId}`)
 export const getDocumentById = (id) => request.get(`/documents/${id}`)
 export const deleteDocument = (id) => request.delete(`/documents/${id}`)
-export const downloadDocument = (id) => { window.open(`/api/documents/download/${id}`, '_blank') }
+
+// 预览文件
+export const previewDocument = (id) => {
+  return request.get(`/documents/preview/${id}`, {
+    responseType: 'blob'
+  })
+}
+
+// 下载文件
+export const downloadDocument = (id) => {
+  return request.get(`/documents/download/${id}`, {
+    responseType: 'blob'
+  })
+}

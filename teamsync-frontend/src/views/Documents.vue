@@ -47,20 +47,95 @@
         </el-table-column>
       </el-table>
     </el-card>
+
+    <!-- 预览对话框 -->
+    <el-dialog v-model="previewDialogVisible" :title="previewFileName" width="80%" top="5vh">
+      <div class="preview-container">
+        <div v-if="previewLoading" class="loading-wrapper">
+          <el-icon class="is-loading" :size="40"><Loading /></el-icon>
+          <span style="margin-left:12px">加载中...</span>
+        </div>
+        <template v-else-if="previewError">
+          <el-alert type="error" :title="previewError" show-icon />
+        </template>
+        <template v-else-if="previewType === 'image'">
+          <img :src="previewUrl" style="max-width:100%;display:block;margin:0 auto" alt="预览" />
+        </template>
+        <template v-else-if="previewType === 'pdf'">
+          <iframe :src="previewUrl" style="width:100%;height:600px;border:none" title="PDF预览" />
+        </template>
+        <template v-else-if="previewType === 'text'">
+          <div class="text-preview">
+            <pre>{{ previewTextContent }}</pre>
+          </div>
+        </template>
+        <template v-else>
+          <div class="unsupported-preview">
+            <el-alert type="info" title="该文件类型不支持在线预览" description="请点击下载按钮查看文件" show-icon />
+          </div>
+        </template>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Document } from '@element-plus/icons-vue'
-import { getDocuments, uploadDocument, deleteDocument, downloadDocument } from '../api/document'
+import { Document, Loading } from '@element-plus/icons-vue'
+import { getDocuments, uploadDocument, deleteDocument, downloadDocument, previewDocument } from '../api/document'
 import { getMyProjects } from '../api/project'
 
 const loading = ref(false)
 const documentList = ref([])
 const projects = ref([])
 const selectedProject = ref(null)
+
+// 预览相关
+const previewDialogVisible = ref(false)
+const previewLoading = ref(false)
+const previewError = ref('')
+const previewUrl = ref('')
+const previewType = ref('')
+const previewFileName = ref('')
+const previewTextContent = ref('')
+
+const isPreviewable = (fileName, fileType) => {
+  const previewableExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.pdf', '.txt', '.md', '.csv', '.json']
+  const lowerName = fileName.toLowerCase()
+  for (const ext of previewableExtensions) {
+    if (lowerName.endsWith(ext)) {
+      return true
+    }
+  }
+  const previewableMimeTypes = ['image/', 'application/pdf', 'text/']
+  if (fileType) {
+    for (const mime of previewableMimeTypes) {
+      if (fileType.startsWith(mime)) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
+const getPreviewType = (fileName, fileType) => {
+  const lowerName = fileName.toLowerCase()
+  if (lowerName.endsWith('.pdf')) return 'pdf'
+  if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || 
+      lowerName.endsWith('.png') || lowerName.endsWith('.gif') ||
+      lowerName.endsWith('.bmp') || lowerName.endsWith('.webp')) {
+    return 'image'
+  }
+  if (fileType && fileType.startsWith('image/')) return 'image'
+  if (fileType && fileType.startsWith('application/pdf')) return 'pdf'
+  if (fileType && fileType.startsWith('text/')) return 'text'
+  if (lowerName.endsWith('.txt') || lowerName.endsWith('.md') || 
+      lowerName.endsWith('.csv') || lowerName.endsWith('.json')) {
+    return 'text'
+  }
+  return 'unsupported'
+}
 
 const formatFileSize = (size) => {
   if (!size) return '0 B'
@@ -123,16 +198,61 @@ const handleCustomUpload = async (options) => {
   }
 }
 
-const previewDoc = (row) => {
-  if(row.fileUrl) {
-    window.open(row.fileUrl, '_blank')
-  } else {
-    ElMessage.warning('暂无在线预览链接')
+const previewDoc = async (row) => {
+  previewFileName.value = row.name
+  previewError.value = ''
+  previewLoading.value = true
+  previewDialogVisible.value = true
+  
+  try {
+    const res = await previewDocument(row.id)
+    if (res.code) {
+      // 如果是错误响应
+      previewError.value = res.message || '预览失败'
+      previewLoading.value = false
+      return
+    }
+    
+    const blob = res
+    previewType.value = getPreviewType(row.name, row.fileType)
+    
+    if (previewType.value === 'text') {
+      const text = await blob.text()
+      previewTextContent.value = text
+    } else {
+      const url = URL.createObjectURL(blob)
+      previewUrl.value = url
+    }
+  } catch (error) {
+    console.error('预览失败:', error)
+    previewError.value = error.message || '预览失败'
+  } finally {
+    previewLoading.value = false
   }
 }
 
-const downloadDoc = (row) => {
-  downloadDocument(row.id)
+const downloadDoc = async (row) => {
+  try {
+    const res = await downloadDocument(row.id)
+    if (res.code) {
+      ElMessage.error(res.message || '下载失败')
+      return
+    }
+    
+    const blob = res
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = row.name
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    ElMessage.success('下载开始')
+  } catch (error) {
+    console.error('下载失败:', error)
+    ElMessage.error('下载失败')
+  }
 }
 
 const deleteDoc = (row) => {
@@ -171,5 +291,27 @@ onMounted(() => {
 .title-text {
   font-weight: 600;
   font-size: 16px;
+}
+.preview-container {
+  min-height: 200px;
+}
+.loading-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+}
+.text-preview {
+  background-color: #f5f7fa;
+  padding: 20px;
+  border-radius: 8px;
+}
+.text-preview pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.unsupported-preview {
+  padding: 20px 0;
 }
 </style>
