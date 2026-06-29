@@ -90,7 +90,14 @@ public class DocumentServiceImpl implements DocumentService {
             doc.setFilePath(targetPath.toString());
             doc.setFileUrl("/uploads/" + storedFilename);
             doc.setFileSize(file.getSize());
-            doc.setFileType(file.getContentType());
+            
+            // 限制fileType不超过50个字符（防止数据库字段溢出
+            String fileType = file.getContentType();
+            if (fileType != null && fileType.length() > 50) {
+                fileType = fileType.substring(0, 50);
+            }
+            doc.setFileType(fileType);
+            
             doc.setUploaderId(uploaderId);
             doc.setCategory(category != null ? category : "其他");
             doc.setDownloadCount(0);

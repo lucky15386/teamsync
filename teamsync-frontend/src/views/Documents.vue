@@ -10,6 +10,7 @@
             </el-select>
             <el-upload
               class="upload-btn"
+              action="#"
               :show-file-list="false"
               :http-request="handleCustomUpload"
               :before-upload="beforeUpload"
