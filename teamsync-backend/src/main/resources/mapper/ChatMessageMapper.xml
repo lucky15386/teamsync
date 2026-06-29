@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamsync.mapper.ChatMessageMapper">
+    <resultMap id="msgMap" type="ChatMessage">
+        <id column="id" property="id"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="sender_id" property="senderId"/>
+        <result column="content" property="content"/>
+        <result column="type" property="type"/>
+        <result column="file_url" property="fileUrl"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="is_read" property="isRead"/>
+        <result column="create_time" property="createTime"/>
+        <result column="sender_name" property="senderName"/>
+        <result column="sender_avatar" property="senderAvatar"/>
+    </resultMap>
+    
+    <select id="findById" resultMap="msgMap">
+        SELECT m.*, u.username as sender_name, u.avatar as sender_avatar 
+        FROM chat_message m 
+        LEFT JOIN user u ON m.sender_id = u.id 
+        WHERE m.id = #{id}
+    </select>
+    
+    <select id="findBySessionId" resultMap="msgMap">
+        SELECT m.*, u.username as sender_name, u.avatar as sender_avatar 
+        FROM chat_message m 
+        LEFT JOIN user u ON m.sender_id = u.id 
+        WHERE m.session_id = #{sessionId} 
+        ORDER BY m.create_time ASC
+    </select>
+    
+    <select id="findBySessionIdWithPagination" resultMap="msgMap">
+        SELECT m.*, u.username as sender_name, u.avatar as sender_avatar 
+        FROM chat_message m 
+        LEFT JOIN user u ON m.sender_id = u.id 
+        WHERE m.session_id = #{sessionId} 
+        ORDER BY m.create_time DESC 
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO chat_message(session_id, sender_id, content, type, file_url, file_name, file_size, is_read) 
+        VALUES(#{sessionId}, #{senderId}, #{content}, #{type}, #{fileUrl}, #{fileName}, #{fileSize}, #{isRead})
+    </insert>
+    
+    <update id="updateReadStatus">
+        UPDATE chat_message SET is_read = 1 
+        WHERE session_id = #{sessionId} AND sender_id != #{userId} AND is_read = 0
+    </update>
+    
+    <delete id="deleteById">
+        DELETE FROM chat_message WHERE id = #{id}
+    </delete>
+</mapper>

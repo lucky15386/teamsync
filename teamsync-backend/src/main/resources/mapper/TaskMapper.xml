@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamsync.mapper.TaskMapper">
+    <resultMap id="taskMap" type="Task">
+        <id column="id" property="id"/><result column="project_id" property="projectId"/><result column="title" property="title"/><result column="description" property="description"/><result column="status" property="status"/><result column="priority" property="priority"/><result column="assignee_id" property="assigneeId"/><result column="creator_id" property="creatorId"/><result column="deadline" property="deadline"/><result column="sort_order" property="sortOrder"/><result column="create_time" property="createTime"/><result column="update_time" property="updateTime"/><result column="assignee_name" property="assigneeName"/><result column="creator_name" property="creatorName"/><result column="project_name" property="projectName"/>
+    </resultMap>
+    <sql id="taskJoin">SELECT t.*, u1.real_name as assignee_name, u2.real_name as creator_name, p.name as project_name FROM task t LEFT JOIN user u1 ON t.assignee_id=u1.id LEFT JOIN user u2 ON t.creator_id=u2.id LEFT JOIN project p ON t.project_id=p.id</sql>
+    <select id="findById" resultMap="taskMap"><include refid="taskJoin"/> WHERE t.id=#{id}</select>
+    <select id="findByProjectId" resultMap="taskMap"><include refid="taskJoin"/> WHERE t.project_id=#{projectId} ORDER BY t.sort_order, t.create_time DESC</select>
+    <select id="findByProjectAndStatus" resultMap="taskMap"><include refid="taskJoin"/> WHERE t.project_id=#{projectId} AND t.status=#{status} ORDER BY t.sort_order</select>
+    <select id="findByAssigneeId" resultMap="taskMap"><include refid="taskJoin"/> WHERE t.assignee_id=#{assigneeId} ORDER BY t.deadline</select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">INSERT INTO task(project_id,title,description,status,priority,assignee_id,creator_id,deadline,sort_order) VALUES(#{projectId},#{title},#{description},#{status},#{priority},#{assigneeId},#{creatorId},#{deadline},#{sortOrder})</insert>
+    <update id="update">UPDATE task <set><if test="title!=null">title=#{title},</if><if test="description!=null">description=#{description},</if><if test="status!=null">status=#{status},</if><if test="priority!=null">priority=#{priority},</if><if test="assigneeId!=null">assignee_id=#{assigneeId},</if><if test="deadline!=null">deadline=#{deadline},</if><if test="sortOrder!=null">sort_order=#{sortOrder},</if></set> WHERE id=#{id}</update>
+    <update id="updateStatus">UPDATE task SET status=#{status} WHERE id=#{id}</update>
+    <delete id="deleteById">DELETE FROM task WHERE id=#{id}</delete>
+    <select id="countByProjectAndStatus" resultType="int">SELECT COUNT(*) FROM task WHERE project_id=#{projectId} AND status=#{status}</select>
+</mapper>

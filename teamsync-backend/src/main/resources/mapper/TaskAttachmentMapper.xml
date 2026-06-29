@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamsync.mapper.TaskAttachmentMapper">
+    <resultMap id="taskAttachmentMap" type="TaskAttachment">
+        <id column="id" property="id"/>
+        <result column="task_id" property="taskId"/>
+        <result column="name" property="name"/>
+        <result column="file_path" property="filePath"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="file_type" property="fileType"/>
+        <result column="uploader_id" property="uploaderId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="uploader_name" property="uploaderName"/>
+    </resultMap>
+    <select id="findById" resultMap="taskAttachmentMap">SELECT ta.*, u.username as uploader_name FROM task_attachment ta LEFT JOIN user u ON ta.uploader_id=u.id WHERE ta.id=#{id}</select>
+    <select id="findByTaskId" resultMap="taskAttachmentMap">SELECT ta.*, u.username as uploader_name FROM task_attachment ta LEFT JOIN user u ON ta.uploader_id=u.id WHERE ta.task_id=#{taskId} ORDER BY ta.create_time</select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">INSERT INTO task_attachment(task_id,name,file_path,file_size,file_type,uploader_id) VALUES(#{taskId},#{name},#{filePath},#{fileSize},#{fileType},#{uploaderId})</insert>
+    <delete id="deleteById">DELETE FROM task_attachment WHERE id=#{id}</delete>
+</mapper>

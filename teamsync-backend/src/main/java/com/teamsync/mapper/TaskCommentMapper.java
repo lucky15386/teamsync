@@ -1,0 +1,12 @@
+package com.teamsync.mapper;
+import com.teamsync.entity.TaskComment;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import java.util.List;
+
+@Mapper
+public interface TaskCommentMapper {
+    List<TaskComment> findByTaskId(@Param("taskId") Long taskId);
+    int insert(TaskComment comment);
+    int deleteById(@Param("id") Long id);
+}

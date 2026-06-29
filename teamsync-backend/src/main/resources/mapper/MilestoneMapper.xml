@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamsync.mapper.MilestoneMapper">
+    <resultMap id="milestoneMap" type="Milestone">
+        <id column="id" property="id"/>
+        <result column="project_id" property="projectId"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="deadline" property="deadline"/>
+        <result column="status" property="status"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    <select id="findById" resultMap="milestoneMap">SELECT * FROM milestone WHERE id=#{id}</select>
+    <select id="findByProjectId" resultMap="milestoneMap">SELECT * FROM milestone WHERE project_id=#{projectId} ORDER BY sort_order, create_time</select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">INSERT INTO milestone(project_id,name,description,deadline,status,sort_order) VALUES(#{projectId},#{name},#{description},#{deadline},#{status},#{sortOrder})</insert>
+    <update id="update">UPDATE milestone <set><if test="name!=null">name=#{name},</if><if test="description!=null">description=#{description},</if><if test="deadline!=null">deadline=#{deadline},</if><if test="status!=null">status=#{status},</if><if test="sortOrder!=null">sort_order=#{sortOrder},</if></set> WHERE id=#{id}</update>
+    <delete id="deleteById">DELETE FROM milestone WHERE id=#{id}</delete>
+    <update id="updateStatus">UPDATE milestone SET status=#{status} WHERE id=#{id}</update>
+</mapper>

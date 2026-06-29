@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamsync.mapper.ProjectMapper">
+    <resultMap id="projectMap" type="Project">
+        <id column="id" property="id"/><result column="name" property="name"/><result column="description" property="description"/><result column="creator_id" property="creatorId"/><result column="status" property="status"/><result column="create_time" property="createTime"/><result column="update_time" property="updateTime"/><result column="creator_name" property="creatorName"/><result column="member_count" property="memberCount"/>
+    </resultMap>
+    <select id="findById" resultMap="projectMap">SELECT p.*, u.username as creator_name FROM project p LEFT JOIN user u ON p.creator_id=u.id WHERE p.id=#{id}</select>
+    <select id="findByUserId" resultMap="projectMap">SELECT p.*, u.username as creator_name, (SELECT COUNT(*) FROM project_member WHERE project_id=p.id) as member_count FROM project p LEFT JOIN user u ON p.creator_id=u.id WHERE p.id IN (SELECT project_id FROM project_member WHERE user_id=#{userId}) ORDER BY p.create_time DESC</select>
+    <select id="findAll" resultMap="projectMap">SELECT p.*, u.username as creator_name FROM project p LEFT JOIN user u ON p.creator_id=u.id ORDER BY p.create_time DESC</select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">INSERT INTO project(name,description,creator_id,status) VALUES(#{name},#{description},#{creatorId},#{status})</insert>
+    <update id="update">UPDATE project <set><if test="name!=null">name=#{name},</if><if test="description!=null">description=#{description},</if><if test="status!=null">status=#{status},</if></set> WHERE id=#{id}</update>
+    <delete id="deleteById">DELETE FROM project WHERE id=#{id}</delete>
+    <select id="countMembers" resultType="int">SELECT COUNT(*) FROM project_member WHERE project_id=#{projectId}</select>
+</mapper>

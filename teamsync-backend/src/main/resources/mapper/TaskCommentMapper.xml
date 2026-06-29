@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamsync.mapper.TaskCommentMapper">
+    <resultMap id="commentMap" type="TaskComment">
+        <id column="id" property="id"/><result column="task_id" property="taskId"/><result column="user_id" property="userId"/><result column="content" property="content"/><result column="create_time" property="createTime"/><result column="username" property="username"/><result column="real_name" property="realName"/>
+    </resultMap>
+    <select id="findByTaskId" resultMap="commentMap">SELECT tc.*, u.username, u.real_name FROM task_comment tc LEFT JOIN user u ON tc.user_id=u.id WHERE tc.task_id=#{taskId} ORDER BY tc.create_time ASC</select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">INSERT INTO task_comment(task_id,user_id,content) VALUES(#{taskId},#{userId},#{content})</insert>
+    <delete id="deleteById">DELETE FROM task_comment WHERE id=#{id}</delete>
+</mapper>
