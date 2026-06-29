@@ -90,7 +90,14 @@ public class DocumentServiceImpl implements DocumentService {
             doc.setFilePath(targetPath.toString());
             doc.setFileUrl("/uploads/" + storedFilename);
             doc.setFileSize(file.getSize());
-            doc.setFileType(file.getContentType());
+            
+            // 智能判断文件类型
+            String fileType = file.getContentType();
+            if (fileType == null || fileType.isEmpty() || "application/octet-stream".equals(fileType)) {
+                fileType = guessFileType(originalFilename);
+            }
+            doc.setFileType(fileType);
+            
             doc.setUploaderId(uploaderId);
             doc.setCategory(category != null ? category : "其他");
             doc.setDownloadCount(0);
@@ -124,5 +131,29 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public void incrementDownloadCount(Long id) {
         documentMapper.incrementDownloadCount(id);
+    }
+    
+    private String guessFileType(String fileName) {
+        if (fileName == null) return "application/octet-stream";
+        String lowerName = fileName.toLowerCase();
+        
+        if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) return "image/jpeg";
+        if (lowerName.endsWith(".png")) return "image/png";
+        if (lowerName.endsWith(".gif")) return "image/gif";
+        if (lowerName.endsWith(".bmp")) return "image/bmp";
+        if (lowerName.endsWith(".webp")) return "image/webp";
+        if (lowerName.endsWith(".pdf")) return "application/pdf";
+        if (lowerName.endsWith(".txt")) return "text/plain";
+        if (lowerName.endsWith(".html") || lowerName.endsWith(".htm")) return "text/html";
+        if (lowerName.endsWith(".css")) return "text/css";
+        if (lowerName.endsWith(".js")) return "application/javascript";
+        if (lowerName.endsWith(".csv")) return "text/csv";
+        if (lowerName.endsWith(".json")) return "application/json";
+        if (lowerName.endsWith(".md")) return "text/markdown";
+        if (lowerName.endsWith(".doc") || lowerName.endsWith(".docx")) return "application/msword";
+        if (lowerName.endsWith(".xls") || lowerName.endsWith(".xlsx")) return "application/vnd.ms-excel";
+        if (lowerName.endsWith(".ppt") || lowerName.endsWith(".pptx")) return "application/vnd.ms-powerpoint";
+        
+        return "application/octet-stream";
     }
 }

@@ -144,13 +144,17 @@ public class DocumentController {
             return;
         }
 
-        // 检查是否支持在线预览
+        // 智能判断内容类型，不再严格限制
         String contentType = doc.getFileType();
-        if (!PREVIEWABLE_TYPES.contains(contentType) && !isImageFile(doc.getName())) {
-            response.setStatus(400);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"code\":400,\"message\":\"该文件类型不支持在线预览\"}");
-            return;
+        if (contentType == null || contentType.isEmpty()) {
+            contentType = "application/octet-stream";
+        }
+
+        // 根据文件扩展名推断类型，如果 mime 类型未知
+        String fileName = doc.getName();
+        String guessedType = guessContentType(fileName);
+        if (!isValidContentType(contentType) && guessedType != null) {
+            contentType = guessedType;
         }
 
         // 设置响应头
@@ -170,11 +174,32 @@ public class DocumentController {
         }
     }
 
-    private boolean isImageFile(String fileName) {
+    private boolean isValidContentType(String contentType) {
+        if (contentType == null || contentType.isEmpty()) {
+            return false;
+        }
+        return contentType.contains("/");
+    }
+
+    private String guessContentType(String fileName) {
+        if (fileName == null) return null;
         String lowerName = fileName.toLowerCase();
-        return lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg") ||
-               lowerName.endsWith(".png") || lowerName.endsWith(".gif") ||
-               lowerName.endsWith(".bmp") || lowerName.endsWith(".webp");
+        
+        if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) return "image/jpeg";
+        if (lowerName.endsWith(".png")) return "image/png";
+        if (lowerName.endsWith(".gif")) return "image/gif";
+        if (lowerName.endsWith(".bmp")) return "image/bmp";
+        if (lowerName.endsWith(".webp")) return "image/webp";
+        if (lowerName.endsWith(".pdf")) return "application/pdf";
+        if (lowerName.endsWith(".txt")) return "text/plain";
+        if (lowerName.endsWith(".html") || lowerName.endsWith(".htm")) return "text/html";
+        if (lowerName.endsWith(".css")) return "text/css";
+        if (lowerName.endsWith(".js")) return "application/javascript";
+        if (lowerName.endsWith(".csv")) return "text/csv";
+        if (lowerName.endsWith(".json")) return "application/json";
+        if (lowerName.endsWith(".md")) return "text/markdown";
+        
+        return "application/octet-stream";
     }
 
     /**
