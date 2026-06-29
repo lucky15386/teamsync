@@ -70,7 +70,7 @@ CREATE TABLE `task_attachment` (
     `name` VARCHAR(200) NOT NULL COMMENT '文件名',
     `file_path` VARCHAR(500) NOT NULL COMMENT '文件存储路径',
     `file_size` BIGINT COMMENT '文件大小(字节)',
-    `file_type` VARCHAR(50) COMMENT '文件类型',
+    `file_type` VARCHAR(255) COMMENT '文件类型',
     `uploader_id` BIGINT NOT NULL COMMENT '上传者ID',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='任务附件表';
@@ -134,7 +134,7 @@ CREATE TABLE `document` (
     `file_path` VARCHAR(500) NOT NULL COMMENT '文件存储路径',
     `file_url` VARCHAR(500) COMMENT '文件访问URL',
     `file_size` BIGINT COMMENT '文件大小(字节)',
-    `file_type` VARCHAR(50) COMMENT '文件类型',
+    `file_type` VARCHAR(255) COMMENT '文件类型',
     `uploader_id` BIGINT NOT NULL COMMENT '上传者ID',
     `category` VARCHAR(50) DEFAULT '其他' COMMENT '分类: 需求文档/设计文档/测试文档/其他',
     `download_count` INT DEFAULT 0 COMMENT '下载次数',
